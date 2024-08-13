@@ -28,9 +28,10 @@ pub struct Roster {
     pub reserve: Vec<String>,
     pub players: Vec<String>,
     pub owner_id: String,
-    pub league_id: String
+    pub league_id: String,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RosterSettings {
     pub wins: u16,
     pub waiver_position: u16,
@@ -41,5 +42,5 @@ pub struct RosterSettings {
     pub fpts_decimal: f64,
     pub fpts_against_decimal: f64,
     pub fpts_against: u64,
-    pub fpts: u64, 
+    pub fpts: u64,
 }
