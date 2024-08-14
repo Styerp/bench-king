@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 use super::settings::ScoringSettings;
 // {
@@ -171,15 +172,20 @@ pub struct League {
     pub sport: String,
     pub settings: LeagueSettings,
     pub season_type: String,
-    pub season: u32,
+    pub season: String,
     pub scoring_settings: ScoringSettings,
-    //pub roster_positions: RosterPostions,
-    pub previous_league_id: u128,
+    //pub roster_positions: Vec<RosterPostions>,
+    pub previous_league_id: String,
     pub name: String,
     pub league_id: String,
     pub draft_id: String,
-    pub avatar: String,
+    pub avatar: Option<String>,
     pub company_id: Option<String>,
+}
+impl Display for League {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "League: {}", self)
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -230,4 +236,10 @@ pub struct LeagueSettings {
     pub leg: u8,
     pub reserve_slots: u8,
     pub reserve_allow_cov: u8,
+}
+
+impl Display for LeagueSettings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "League Settings: {}", self)
+    }
 }

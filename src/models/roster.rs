@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 // {
@@ -25,10 +27,14 @@ pub struct Roster {
     pub starters: Vec<String>,
     pub settings: RosterSettings,
     pub roster_id: u32,
-    pub reserve: Vec<String>,
-    pub players: Vec<String>,
+    pub reserve: Option<Vec<String>>,
+    pub players: Option<Vec<String>>,
+    pub player_map: Option<HashMap<String,String>>,
     pub owner_id: String,
     pub league_id: String,
+    pub co_owners: Option<Vec<String>>,
+    pub keepers: Option<Vec<String>>,
+    pub metadata: Option<RosterMetadata>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -39,8 +45,23 @@ pub struct RosterSettings {
     pub total_moves: u128,
     pub ties: u16,
     pub losses: u16,
-    pub fpts_decimal: f64,
-    pub fpts_against_decimal: f64,
-    pub fpts_against: u64,
+    pub fpts_decimal: Option<f64>,
+    pub fpts_against_decimal: Option<f64>,
+    pub fpts_against: Option<u64>,
     pub fpts: u64,
+    pub division: u8,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct RosterMetadata {
+    pub allow_pn_inactive_starters:String,
+    pub allow_pn_player_injury_status:String, 
+    pub allow_pn_scoring: String,
+    pub restrict_pn_scoring_starters_only: String
+}
+
+impl std::fmt::Display for RosterMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Roster Metadata: {}", self)
+    }
 }

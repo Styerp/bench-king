@@ -54,7 +54,7 @@ mod test {
             points: 20.0,
             custom_points: None,
             players_points: HashMap::from([]),
-            starters_points: vec![]
+            starters_points: vec![],
         };
         assert_eq!(data.bench_players(), expected)
     }
