@@ -1,15 +1,42 @@
+use std::collections::HashMap;
+
 use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache, HttpCacheOptions};
-use reqwest::{Client, Error, Response};
+use reqwest::{Client, Response};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Deserializer;
 use serde_path_to_error::deserialize;
 
-use crate::models::{league::League, matchup::Matchup, roster::Roster, user::{LeagueUser, User}};
+use crate::models::{
+    league::League,
+    matchup::Matchup,
+    roster::Roster,
+    user::{LeagueUser, User},
+};
 
 const BASE_URL: &'static str = "https://api.sleeper.app/v1/";
 pub struct SleeperClient {
     pub client: ClientWithMiddleware,
 }
+pub enum SleeperApi {
+    GetUser,
+    GetAvatar,
+    GetAllLeaguesForUser,
+    GetLeagueDetails,
+    GetRostersInLeague,
+    GetUsersInLeague,
+    GetMatchupsForWeek,
+}
+#[derive(Debug)]
+pub enum SleeperResultType {
+    User(User),
+    Avatar(String),
+    Leagues(Vec<League>),
+    LeagueDetails(League),
+    Rosters(Vec<Roster>),
+    LeagueUsers(Vec<LeagueUser>),
+    Matchups(Vec<Matchup>),
+}
+
 impl SleeperClient {
     pub fn build() -> SleeperClient {
         let cache = Cache(HttpCache {
@@ -21,131 +48,121 @@ impl SleeperClient {
         SleeperClient { client }
     }
 
-    pub async fn get_user(&self, user_id_or_name: String) -> Result<User, String> {
-        let url = format!("{BASE_URL}user/{}", user_id_or_name);
-        match self.client.get(&url).send().await {
-            Ok(response) => match self.get_err_path::<User>(response).await {
-                Ok(user) => Ok(user),
-                Err(e) => {
-                    eprintln!("Error getting user: {}", e);
-                    Err(e)
-                }
-            },
-            Err(e) => {
-                eprintln!("Error getting user: {}", e);
-                Err(e.to_string())
-            }
-        }
-    }
-
-    pub async fn get_avatar(
+    pub async fn get_data(
         &self,
-        avatar_id: String,
-        full_or_thumb: Option<String>,
-    ) -> Result<String, String> {
-        let extension = match full_or_thumb {
-            Some(value) => value,
-            None => "".to_string(),
-        };
-        let url = format!("{BASE_URL}avatars/{}/{}", extension, avatar_id);
-        match self.client.get(&url).send().await {
-            Ok(response) => match self.get_err_path::<String>(response).await {
-                Ok(user) => Ok(user),
-                Err(e) => {
-                    eprintln!("Error getting avatar: {}", e);
-                    Err(e)
+        api: SleeperApi,
+        params: HashMap<String, String>,
+    ) -> Result<SleeperResultType, String>
+    {
+        //let url = 
+        match api {
+            SleeperApi::GetUser => {
+                let user_identifier = match params.get("user_id") {
+                    Some(value) => value,
+                    None => return Err("No value for key user_id provided".to_string()),
+                };
+                let url = format!("{BASE_URL}user/{}", user_identifier);
+                match self.call_sleeper::<User>(url).await {
+                    Ok(user) => Ok(SleeperResultType::User(user)),
+                    Err(e) => Err(e),
                 }
             },
-            Err(e) => {
-                eprintln!("Error getting avatar: {}", e);
-                Err(e.to_string())
-            }
-        }
-    }
-
-    pub async fn get_all_leagues_for_user(
-        &self,
-        user_id: String,
-        season: String,
-        sport: Option<String>,
-    ) -> Result<Vec<League>, String> {
-        let sport = match sport {
-            Some(value) => value,
-            None => "nfl".to_string(),
-        };
-        let url = format!("{BASE_URL}user/{}/leagues/{}/{}", user_id, sport, season);
-        match self.client.get(&url).send().await {
-            Ok(response) => match self.get_err_path::<Vec<League>>(response).await {
-                Ok(leagues) => Ok(leagues),
-                Err(e) => {
-                    eprintln!("Error getting leagues for user. {}", e);
-                    Err(e)
+            SleeperApi::GetAllLeaguesForUser => {
+                let inputs = {
+                    let user_id = match params.get("user_id") {
+                        Some(value) => value,
+                        None => return Err("No value for key user_id provided".to_string()),
+                    };
+                    let season = match params.get("season") {
+                        Some(value) => value,
+                        None => return Err("No value for key season provided".to_string()),
+                    };
+                    let sport = match params.get("sport") {
+                        Some(value) => value,
+                        None => "nfl",
+                    };
+                    (user_id, season, sport)
+                };
+                let url = format!(
+                    "{BASE_URL}user/{}/leagues/{}/{}",
+                    inputs.0,
+                    inputs.2,
+                    inputs.1
+                );
+                match self.call_sleeper::<Vec<League>>(url).await {
+                    Ok(leagues) => Ok(SleeperResultType::Leagues(leagues)),
+                    Err(e) => Err(e),
                 }
             },
-            Err(e) => {
-                eprintln!("Error getting leagues for user. {}", e);
-                Err(e.to_string())
-            }
-        }
-    }
-
-    pub async fn get_league_details(&self, league_id: String) -> Result<League, String> {
-        let url = format!("{BASE_URL}league/{}", league_id);
-
-        match self.client.get(&url).send().await {
-            Ok(response) => match self.get_err_path::<League>(response).await {
-                Ok(league) => Ok(league),
-                Err(e) => {
-                    eprintln!("Error getting league details: {}", e);
-                    Err(e)
-                },
+            SleeperApi::GetAvatar => {
+                let inputs = {
+                    let avatar_id = match params.get("avatar_id") {
+                        Some(value) => value,
+                        None => return Err("No value for key avatar_id provided".to_string()),
+                    };
+                    let full_or_thumb = match params.get("full_or_thumb") {
+                        Some(value) => value,
+                        None => return Err("No value for key full_or_thumb provided".to_string()),
+                    };
+                    (avatar_id, full_or_thumb)
+                };
+                let url = format!("{BASE_URL}avatars/{}/{}", inputs.0, inputs.1);
+                match self.call_sleeper::<String>(url).await {
+                    Ok(avatar) => Ok(SleeperResultType::Avatar(avatar)),
+                    Err(e) => Err(e),
+                }
             },
-            Err(e) => Err(e.to_string()),
-        }
-    }
-
-    pub async fn get_rosters_in_league(&self, league_id: String) -> Result<Vec<Roster>, String> {
-        let url = format!("{BASE_URL}league/{}/rosters", league_id);
-
-        match self.client.get(&url).send().await {
-            Ok(response) => match self.get_err_path::<Vec<Roster>>(response).await {
-                Ok(rosters) => Ok(rosters),
-                Err(e) => {
-                    eprintln!("Error getting rosters in league: {}", e);
-                    Err(e)
-                },
+            SleeperApi::GetLeagueDetails => {
+                let league_id = match params.get("league_id") {
+                    Some(value) => value,
+                    None => return Err("No value for key league_id provided".to_string()),
+                };
+                let url = format!("{BASE_URL}league/{}", league_id);
+                match self.call_sleeper::<League>(url).await {
+                    Ok(league) => Ok(SleeperResultType::LeagueDetails(league)),
+                    Err(e) => Err(e),
+                }
             },
-            Err(e) => Err(e.to_string()),
-        }
-    }
-
-    pub async fn get_users_in_league(&self, league_id: String) -> Result<Vec<LeagueUser>, String> {
-        let url = format!("{BASE_URL}league/{}/users", league_id);
-
-        match self.client.get(&url).send().await {
-            Ok(response) => match self.get_err_path::<Vec<LeagueUser>>(response).await {
-                Ok(users) => Ok(users),
-                Err(e) => {
-                    eprintln!("Error getting users in league: {}", e);
-                    Err(e)
-                },
+            SleeperApi::GetRostersInLeague => {
+                let league_id = match params.get("league_id") {
+                    Some(value) => value,
+                    None => return Err("No value for key league_id provided".to_string()),
+                };
+                let url = format!("{BASE_URL}league/{}/rosters", league_id);
+                match self.call_sleeper::<Vec<Roster>>(url).await {
+                    Ok(rosters) => Ok(SleeperResultType::Rosters(rosters)),
+                    Err(e) => Err(e),
+                }
             },
-            Err(e) => Err(e.to_string()),
-        }
-    }
-
-    pub async fn get_matchups_for_week(&self, league_id: String, week: u32) -> Result<Vec<Matchup>, String> {
-        let url = format!("{BASE_URL}league/{}/matchups/{}", league_id, week);
-
-        match self.client.get(&url).send().await {
-            Ok(response) => match self.get_err_path::<Vec<Matchup>>(response).await {
-                Ok(rosters) => Ok(rosters),
-                Err(e) => {
-                    eprintln!("Error getting matchups for week: {}", e);
-                    Err(e)
-                },
+            SleeperApi::GetUsersInLeague => {
+                let league_id = match params.get("league_id") {
+                    Some(value) => value,
+                    None => return Err("No value for key league_id provided".to_string()),
+                };
+                let url = format!("{BASE_URL}league/{}/users", league_id);
+                match self.call_sleeper::<Vec<LeagueUser>>(url).await {
+                    Ok(users) => Ok(SleeperResultType::LeagueUsers(users)),
+                    Err(e) => Err(e),
+                }
             },
-            Err(e) => Err(e.to_string()),
+            SleeperApi::GetMatchupsForWeek => {
+                let inputs = {
+                    let league_id = match params.get("league_id") {
+                        Some(value) => value,
+                        None => return Err("No value for key league_id provided".to_string()),
+                    };
+                    let week = match params.get("week") {
+                        Some(value) => value,
+                        None => return Err("No value for key week provided".to_string()),
+                    };
+                    (league_id, week)
+                };
+                let url = format!("{BASE_URL}league/{}/matchups/{}", inputs.0, inputs.1);
+                match self.call_sleeper::<Vec<Matchup>>(url).await {
+                    Ok(matchups) => Ok(SleeperResultType::Matchups(matchups)),
+                    Err(e) => Err(e),
+                }
+            },
         }
     }
 
@@ -164,6 +181,23 @@ impl SleeperClient {
         match deser {
             Ok(details) => Ok(details),
             Err(e) => Err(e.path().to_string()),
+        }
+    }
+
+    // Generic callable
+    async fn call_sleeper<T>(&self, url: String) -> Result<T, String>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        match self.client.get(&url).send().await {
+            Ok(response) => match self.get_err_path::<T>(response).await {
+                Ok(data) => Ok(data),
+                Err(e) => {
+                    eprintln!("Error getting data: {}", e);
+                    Err(e)
+                }
+            },
+            Err(e) => Err(e.to_string()),
         }
     }
 }

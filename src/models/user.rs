@@ -26,7 +26,7 @@ pub struct User {
     pub solicitable: Option<String>,
     pub summoner_name: Option<String>,
     pub summoner_realm: Option<String>,
-    pub token:  Option<String>,
+    pub token: Option<String>,
     pub verification: Option<String>,
 }
 

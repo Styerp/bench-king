@@ -29,7 +29,7 @@ pub struct Roster {
     pub roster_id: u32,
     pub reserve: Option<Vec<String>>,
     pub players: Option<Vec<String>>,
-    pub player_map: Option<HashMap<String,String>>,
+    pub player_map: Option<HashMap<String, String>>,
     pub owner_id: String,
     pub league_id: String,
     pub co_owners: Option<Vec<String>>,
@@ -54,10 +54,10 @@ pub struct RosterSettings {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RosterMetadata {
-    pub allow_pn_inactive_starters:String,
-    pub allow_pn_player_injury_status:String, 
+    pub allow_pn_inactive_starters: String,
+    pub allow_pn_player_injury_status: String,
     pub allow_pn_scoring: String,
-    pub restrict_pn_scoring_starters_only: String
+    pub restrict_pn_scoring_starters_only: String,
 }
 
 impl std::fmt::Display for RosterMetadata {
