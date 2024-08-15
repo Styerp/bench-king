@@ -3,8 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use http_cache_reqwest::{
     CACacheManager, Cache, CacheMode, CacheOptions, HttpCache, HttpCacheOptions,
 };
-use http_cache_semantics::{CachePolicy, RequestLike};
-use reqwest::{Client, Request, Response};
+use reqwest::{Client, Response};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Deserializer;
 

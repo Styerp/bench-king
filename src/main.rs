@@ -1,6 +1,5 @@
-use std::collections::HashMap;
 
-use bench_king_sleeper::client::{ActionType, SleeperApi, SleeperClient};
+use bench_king_sleeper::client::SleeperClient;
 
 const LEAGUE_ID: &str = "1124926301107884032";
 const PATRICKS_USER_ID: &str = "1126996395593973760";

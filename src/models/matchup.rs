@@ -44,7 +44,7 @@ mod test {
 
         let data = Matchup {
             starters: vec!["234".to_string(), "567".to_string(), "DET".to_string()],
-            roster_id: RosterId(1),
+            roster_id: 1,
             players: vec![
                 "123".to_string(),
                 "456".to_string(),

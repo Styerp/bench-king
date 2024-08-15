@@ -42,7 +42,7 @@ pub fn optimal_roster_for_matchup(
         .iter()
         .filter(|player| match &roster.players {
             Some(roster_players) => roster_players.iter().any(|rp| match player.get(rp) {
-                Some(p) => true,
+                Some(_p) => true,
                 None => false,
             }),
             None => false,

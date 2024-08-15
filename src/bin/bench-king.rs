@@ -1,6 +1,5 @@
 use bench_king_sleeper::calculation_helpers::calculate_optimal_points::optimal_roster_for_matchup;
-use bench_king_sleeper::client::{SleeperClient, Sport};
-use bench_king_sleeper::models::matchup;
+use bench_king_sleeper::client::SleeperClient;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
