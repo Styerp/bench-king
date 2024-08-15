@@ -78,6 +78,7 @@ name = "bench-king"
 version = "0.1.0"
 dependencies = [
  "http-cache-reqwest",
+ "http-cache-semantics",
  "reqwest",
  "reqwest-middleware",
  "serde",
@@ -519,6 +520,7 @@ checksum = "92baf25cf0b8c9246baecf3a444546360a97b569168fdf92563ee6a47829920c"
 dependencies = [
  "http",
  "http-serde",
+ "reqwest",
  "serde",
  "time",
 ]

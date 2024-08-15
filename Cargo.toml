@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 http-cache-reqwest = "0.14.0"
+http-cache-semantics = { version = "2.1.0", features = ["reqwest"] }
 reqwest = "0.12.5"
 reqwest-middleware = { version = "0.3.3", features = ["json"] }
 serde = { version = "1.0.207", features = ["serde_derive", "derive"] }

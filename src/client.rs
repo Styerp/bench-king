@@ -1,14 +1,17 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
-use http_cache_reqwest::{CACacheManager, Cache, CacheMode, HttpCache, HttpCacheOptions};
-use reqwest::{Client, Response};
+use http_cache_reqwest::{
+    CACacheManager, Cache, CacheMode, CacheOptions, HttpCache, HttpCacheOptions,
+};
+use http_cache_semantics::{CachePolicy, RequestLike};
+use reqwest::{Client, Request, Response};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Deserializer;
-use serde_path_to_error::deserialize;
 
 use crate::models::{
     league::League,
     matchup::Matchup,
+    player::Player,
     roster::Roster,
     user::{LeagueUser, User},
 };
@@ -25,6 +28,7 @@ pub enum SleeperApi {
     GetRostersInLeague,
     GetUsersInLeague,
     GetMatchupsForWeek,
+    FetchAllPlayers,
 }
 #[derive(Debug)]
 pub enum SleeperResultType {
@@ -35,14 +39,27 @@ pub enum SleeperResultType {
     Rosters(Vec<Roster>),
     LeagueUsers(Vec<LeagueUser>),
     Matchups(Vec<Matchup>),
+    Players(Vec<Player>),
 }
 
 impl SleeperClient {
     pub fn build() -> SleeperClient {
+        // TODO: Figure out how to have a different cache policy for different endpoints
+        let cache_options = CacheOptions {
+            immutable_min_time_to_live: Duration::from_secs(86400),
+            shared: true,
+            ignore_cargo_cult: false,
+            cache_heuristic: 0.1,
+        };
         let cache = Cache(HttpCache {
             manager: CACacheManager::default(),
             mode: CacheMode::Default,
-            options: HttpCacheOptions::default(),
+            options: HttpCacheOptions {
+                cache_options: Some(cache_options),
+                cache_key: Default::default(),
+                cache_bust: Default::default(),
+                cache_mode_fn: Default::default(),
+            },
         });
         let client = ClientBuilder::new(Client::new()).with(cache).build();
         SleeperClient { client }
@@ -52,9 +69,7 @@ impl SleeperClient {
         &self,
         api: SleeperApi,
         params: HashMap<String, String>,
-    ) -> Result<SleeperResultType, String>
-    {
-        //let url = 
+    ) -> Result<SleeperResultType, String> {
         match api {
             SleeperApi::GetUser => {
                 let user_identifier = match params.get("user_id") {
@@ -66,7 +81,7 @@ impl SleeperClient {
                     Ok(user) => Ok(SleeperResultType::User(user)),
                     Err(e) => Err(e),
                 }
-            },
+            }
             SleeperApi::GetAllLeaguesForUser => {
                 let inputs = {
                     let user_id = match params.get("user_id") {
@@ -85,15 +100,13 @@ impl SleeperClient {
                 };
                 let url = format!(
                     "{BASE_URL}user/{}/leagues/{}/{}",
-                    inputs.0,
-                    inputs.2,
-                    inputs.1
+                    inputs.0, inputs.2, inputs.1
                 );
                 match self.call_sleeper::<Vec<League>>(url).await {
                     Ok(leagues) => Ok(SleeperResultType::Leagues(leagues)),
                     Err(e) => Err(e),
                 }
-            },
+            }
             SleeperApi::GetAvatar => {
                 let inputs = {
                     let avatar_id = match params.get("avatar_id") {
@@ -111,7 +124,7 @@ impl SleeperClient {
                     Ok(avatar) => Ok(SleeperResultType::Avatar(avatar)),
                     Err(e) => Err(e),
                 }
-            },
+            }
             SleeperApi::GetLeagueDetails => {
                 let league_id = match params.get("league_id") {
                     Some(value) => value,
@@ -122,7 +135,7 @@ impl SleeperClient {
                     Ok(league) => Ok(SleeperResultType::LeagueDetails(league)),
                     Err(e) => Err(e),
                 }
-            },
+            }
             SleeperApi::GetRostersInLeague => {
                 let league_id = match params.get("league_id") {
                     Some(value) => value,
@@ -133,7 +146,7 @@ impl SleeperClient {
                     Ok(rosters) => Ok(SleeperResultType::Rosters(rosters)),
                     Err(e) => Err(e),
                 }
-            },
+            }
             SleeperApi::GetUsersInLeague => {
                 let league_id = match params.get("league_id") {
                     Some(value) => value,
@@ -144,7 +157,7 @@ impl SleeperClient {
                     Ok(users) => Ok(SleeperResultType::LeagueUsers(users)),
                     Err(e) => Err(e),
                 }
-            },
+            }
             SleeperApi::GetMatchupsForWeek => {
                 let inputs = {
                     let league_id = match params.get("league_id") {
@@ -162,7 +175,14 @@ impl SleeperClient {
                     Ok(matchups) => Ok(SleeperResultType::Matchups(matchups)),
                     Err(e) => Err(e),
                 }
-            },
+            }
+            SleeperApi::FetchAllPlayers => {
+                let url = format!("{BASE_URL}players/nfl");
+                match self.call_sleeper::<Vec<Player>>(url).await {
+                    Ok(players) => Ok(SleeperResultType::Players(players)),
+                    Err(e) => Err(e),
+                }
+            }
         }
     }
 
@@ -177,7 +197,7 @@ impl SleeperClient {
         };
         println!("{}", data);
         let deser = &mut Deserializer::from_str(data.as_str());
-        let deser: Result<T, _> = deserialize(deser);
+        let deser: Result<T, _> = serde_path_to_error::deserialize(deser);
         match deser {
             Ok(details) => Ok(details),
             Err(e) => Err(e.path().to_string()),

@@ -14,10 +14,12 @@ async fn main() {
     //     .await.unwrap();
     let resp = sleeper_client
         .get_data(
-            SleeperApi::GetAllLeaguesForUser,
-            HashMap::from([("user_id".to_string(), PATRICKS_USER_ID.to_string()),
-            ("season".to_string(), "2024".to_string()),
-            ("sport".to_string(), "nfl".to_string())]),
+            SleeperApi::FetchAllPlayers,
+            HashMap::from([
+                ("user_id".to_string(), PATRICKS_USER_ID.to_string()),
+                ("season".to_string(), "2024".to_string()),
+                ("sport".to_string(), "nfl".to_string()),
+            ]),
         )
         .await
         .unwrap();
