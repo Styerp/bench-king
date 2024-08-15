@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+pub type RosterId = u32;
+
 // {
 //     "starters": ["2307", "2257", "4034", "147", "642", "4039", "515", "4149", "DET"],
 //     "settings": {
@@ -26,7 +28,7 @@ use serde::{Deserialize, Serialize};
 pub struct Roster {
     pub starters: Vec<String>,
     pub settings: RosterSettings,
-    pub roster_id: u32,
+    pub roster_id: RosterId,
     pub reserve: Option<Vec<String>>,
     pub players: Option<Vec<String>>,
     pub player_map: Option<HashMap<String, String>>,
@@ -45,8 +47,8 @@ pub struct RosterSettings {
     pub total_moves: u128,
     pub ties: u16,
     pub losses: u16,
-    pub fpts_decimal: Option<f64>,
-    pub fpts_against_decimal: Option<f64>,
+    pub fpts_decimal: Option<f32>,
+    pub fpts_against_decimal: Option<f32>,
     pub fpts_against: Option<u64>,
     pub fpts: u64,
     pub division: u8,

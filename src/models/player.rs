@@ -108,8 +108,12 @@ pub struct PlayerMetadata {
     pub override_active: Option<String>,
     pub rookie_year: Option<String>,
     pub source_id: Option<String>,
-    pub years_exp_shift: u8
+    pub years_exp_shift: u8,
 }
 
+pub type Player = HashMap<String, PlayerDetails>;
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Player(HashMap<String, PlayerDetails>);
+pub struct TrendingPlayer {
+    pub player_id: String,
+    pub count: u32,
+}

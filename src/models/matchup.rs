@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use super::roster::RosterId;
+
 // {
 //     "starters": ["421", "4035", "3242", "2133", "2449", "4531", "2257", "788", "PHI"],
 //     "roster_id": 1,
@@ -11,14 +13,14 @@ use serde::{Deserialize, Serialize};
 //     "custom_points": null // if commissioner overrides points manually
 //   }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Matchup {
     pub starters: Vec<String>,
-    pub roster_id: u32,
+    pub roster_id: RosterId,
     pub players: Vec<String>,
     pub matchup_id: u16,
-    pub points: f64,
-    pub custom_points: Option<f64>,
+    pub points: f32,
+    pub custom_points: Option<f32>,
     pub players_points: HashMap<String, f32>,
     pub starters_points: Vec<f32>,
 }
@@ -42,7 +44,7 @@ mod test {
 
         let data = Matchup {
             starters: vec!["234".to_string(), "567".to_string(), "DET".to_string()],
-            roster_id: 1,
+            roster_id: RosterId(1),
             players: vec![
                 "123".to_string(),
                 "456".to_string(),

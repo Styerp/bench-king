@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-use super::settings::ScoringSettings;
+use super::{positions::RosterPosition, settings::ScoringSettings};
 // {
 //     "name": "Fantasy Football Fetish",
 //     "status": "pre_draft",
@@ -174,7 +174,7 @@ pub struct League {
     pub season_type: String,
     pub season: String,
     pub scoring_settings: ScoringSettings,
-    //pub roster_positions: Vec<RosterPostions>,
+    pub roster_positions: Vec<RosterPosition>,
     pub previous_league_id: String,
     pub name: String,
     pub league_id: String,

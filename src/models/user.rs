@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+
+pub type UserId = String;
 //{
 // "username": "sleeperuser",
 // "user_id": "12345678",
@@ -9,7 +11,7 @@ use std::fmt::Display;
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct User {
     pub username: String,
-    pub user_id: String,
+    pub user_id: UserId,
     pub display_name: String,
     pub avatar: String,
     pub cookies: Option<String>,
@@ -43,7 +45,7 @@ pub struct User {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LeagueUser {
     pub username: String,
-    pub user_id: String,
+    pub user_id: UserId,
     pub display_name: String,
     pub avatar: String,
     pub metadata: LeagueUserMetadata,
