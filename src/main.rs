@@ -8,7 +8,7 @@ const PATRICKS_USER_ID: &str = "1126996395593973760";
 async fn main() {
     let sleeper_client = SleeperClient::build();
     let resp = sleeper_client
-        .get_league_details(LEAGUE_ID.to_string())
+        .get_users_in_league(LEAGUE_ID.to_string())
         .await
         .unwrap();
     println!("{:?}", resp);

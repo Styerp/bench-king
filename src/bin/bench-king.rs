@@ -1,4 +1,4 @@
-use bench_king_sleeper::calculation_helpers::calculate_optimal_points::optimal_roster_for_matchup;
+use bench_king_sleeper::calculation_helpers::calculate_bench_king_for_week::calculate_bench_king_for_week;
 use bench_king_sleeper::client::SleeperClient;
 use clap::Parser;
 
@@ -52,54 +52,10 @@ pub async fn main() {
     let league = sleeper_client.get_league_details(league_id.clone()).await.unwrap();
     let owners = sleeper_client.get_users_in_league(league_id.clone()).await.unwrap();
 
-    let mut optimals = vec![];
-    for matchup in matchups {
-        let roster = rosters
-            .iter()
-            .find(|r| r.roster_id == matchup.roster_id)
-            .unwrap();
-        let optimal_roster = optimal_roster_for_matchup(
-            matchup.clone(),
-            roster.clone(),
-            players.clone(),
-            league.roster_positions.clone(),
-        );
-        let rep = Report {
-            owner_name: owners
-                .iter()
-                .find(|o| o.user_id == optimal_roster.owner_id)
-                .unwrap()
-                .display_name
-                .clone(),
-            optimal_points: optimal_roster.optimal_points,
-            actual_points: optimal_roster.actual_points,
-        };
-        optimals.push(rep);
-    }
+    let mut optimals = calculate_bench_king_for_week(matchups, rosters, players, league, owners);
     optimals.sort_by_key(|a| a.difference() as i32);
-    println!("{:?}", optimals);
-}
-
-#[derive(Debug)]
-pub struct Report {
-    pub owner_name: String,
-    pub optimal_points: f32,
-    pub actual_points: f32,
-}
-impl Report {
-    pub fn difference(&self) -> f32 {
-        self.optimal_points - self.actual_points
+    for (idx,optimal) in optimals.iter().enumerate() {
+        println!("Bench King Rank: {}: {}", idx + 1, optimal);
     }
-}
-impl std::fmt::Display for Report {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}: {} - {} = {}",
-            self.owner_name,
-            self.optimal_points,
-            self.actual_points,
-            self.difference()
-        )
-    }
+    //println!("{:#?}", optimals);
 }

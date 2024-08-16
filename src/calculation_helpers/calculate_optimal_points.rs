@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::models::{
     matchup::Matchup,
-    player::{Player, PlayerDetails},
+    player::{Players, PlayerDetails},
     positions::RosterPosition,
     roster::{Roster, RosterId},
 };
@@ -15,10 +15,10 @@ pub struct OptimalScoreForMatchup {
     pub optimal_points: f32,
 }
 
-pub fn optimal_roster_for_matchup(
+pub fn optimal_score_for_matchup(
     matchup: Matchup,
     roster: Roster,
-    players: Vec<Player>,
+    players: Players,
     league_positions: Vec<RosterPosition>,
 ) -> OptimalScoreForMatchup {
     let mut roster_position_count = league_positions
@@ -40,14 +40,11 @@ pub fn optimal_roster_for_matchup(
 
     let viable_players_with_stats = players
         .iter()
-        .filter(|player| match &roster.players {
-            Some(roster_players) => roster_players.iter().any(|rp| match player.get(rp) {
-                Some(_p) => true,
-                None => false,
-            }),
+        .filter(|(player_id, _)| match &roster.players {
+            Some(roster_players) => roster_players.iter().any(|rp| &rp == player_id),
             None => false,
         })
-        .map(|player| player.values().nth(0).unwrap())
+        .map(|(_, details)|details)
         .collect::<Vec<&PlayerDetails>>();
 
     let mut used_players: Vec<String> = Vec::new();
@@ -62,9 +59,12 @@ pub fn optimal_roster_for_matchup(
     for (position, count) in roster_position_count {
         let mut players_for_position = viable_players_with_stats
             .iter()
-            .zip(&position.value())
-            .filter(|&(player, position)| player.fantasy_positions.contains(position))
-            .map(|(player, _)| player)
+            //.zip(&position)
+            .filter(|&player| match &player.fantasy_positions {
+                Some(fp) => fp.contains(&position),
+                None => false,
+            }
+            )
             .collect::<Vec<&&PlayerDetails>>();
 
         players_for_position.sort_by_key(|a| {
@@ -74,7 +74,10 @@ pub fn optimal_roster_for_matchup(
         });
 
         for _ in 1..count {
-            let player = players_for_position.pop().unwrap();
+            let player = match players_for_position.pop() {
+                Some(p) => p,
+                None => continue,
+            };
             let player_id = &player.player_id;
             if used_players.contains(&player_id) {
                 continue;

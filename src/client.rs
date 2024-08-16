@@ -10,7 +10,7 @@ use serde_json::Deserializer;
 use crate::models::{
     league::League,
     matchup::Matchup,
-    player::{Player, TrendingPlayer},
+    player::{Players, TrendingPlayer},
     roster::Roster,
     user::{LeagueUser, User},
 };
@@ -39,7 +39,7 @@ pub enum SleeperResultType {
     Rosters(Vec<Roster>),
     LeagueUsers(Vec<LeagueUser>),
     Matchups(Vec<Matchup>),
-    Players(Vec<Player>),
+    Players(Players),
     TrendingPlayers(Vec<TrendingPlayer>),
 }
 
@@ -86,7 +86,7 @@ impl SleeperClient {
 
     pub async fn get_user(&self, user_id: String) -> Result<User, String> {
         let url = format!("{BASE_URL}user/{}", user_id);
-        match self.call_sleeper::<User>(url).await {
+        match self.get_url::<User>(url).await {
             Ok(user) => Ok(user),
             Err(e) => Err(e),
         }
@@ -104,7 +104,7 @@ impl SleeperClient {
             sport.unwrap_or(Sport::default()),
             season
         );
-        match self.call_sleeper::<Vec<League>>(url).await {
+        match self.get_url::<Vec<League>>(url).await {
             Ok(leagues) => Ok(leagues),
             Err(e) => Err(e),
         }
@@ -112,7 +112,7 @@ impl SleeperClient {
 
     pub async fn get_users_in_league(&self, league_id: String) -> Result<Vec<LeagueUser>, String> {
         let url = format!("{BASE_URL}league/{}/users", league_id);
-        match self.call_sleeper::<Vec<LeagueUser>>(url).await {
+        match self.get_url::<Vec<LeagueUser>>(url).await {
             Ok(users) => Ok(users),
             Err(e) => Err(e),
         }
@@ -120,7 +120,7 @@ impl SleeperClient {
 
     pub async fn get_rosters_in_league(&self, league_id: String) -> Result<Vec<Roster>, String> {
         let url = format!("{BASE_URL}league/{}/rosters", league_id);
-        match self.call_sleeper::<Vec<Roster>>(url).await {
+        match self.get_url::<Vec<Roster>>(url).await {
             Ok(rosters) => Ok(rosters),
             Err(e) => Err(e),
         }
@@ -132,7 +132,7 @@ impl SleeperClient {
         week: String,
     ) -> Result<Vec<Matchup>, String> {
         let url = format!("{BASE_URL}league/{}/matchups/{}", league_id, week);
-        match self.call_sleeper::<Vec<Matchup>>(url).await {
+        match self.get_url::<Vec<Matchup>>(url).await {
             Ok(matchups) => Ok(matchups),
             Err(e) => Err(e),
         }
@@ -140,7 +140,7 @@ impl SleeperClient {
 
     pub async fn get_league_details(&self, league_id: String) -> Result<League, String> {
         let url = format!("{BASE_URL}league/{}", league_id);
-        match self.call_sleeper::<League>(url).await {
+        match self.get_url::<League>(url).await {
             Ok(league) => Ok(league),
             Err(e) => Err(e),
         }
@@ -152,15 +152,15 @@ impl SleeperClient {
         full_or_thumb: String,
     ) -> Result<String, String> {
         let url = format!("{BASE_URL}avatars/{}/{}", avatar_id, full_or_thumb);
-        match self.call_sleeper::<String>(url).await {
+        match self.get_url::<String>(url).await {
             Ok(avatar) => Ok(avatar),
             Err(e) => Err(e),
         }
     }
 
-    pub async fn fetch_all_players(&self) -> Result<Vec<Player>, String> {
+    pub async fn fetch_all_players(&self) -> Result<Players, String> {
         let url = format!("{BASE_URL}players/nfl");
-        match self.call_sleeper::<Vec<Player>>(url).await {
+        match self.get_url::<Players>(url).await {
             Ok(players) => Ok(players),
             Err(e) => Err(e),
         }
@@ -180,15 +180,17 @@ impl SleeperClient {
         };
         let url = format!("{BASE_URL}players/{sport}/trending/{type}?lookback_hours={lookback_hours}&limit={limit}", sport=sport.unwrap_or(Sport::default()), 
         type=action_type_str, lookback_hours=lookback_hours.unwrap_or("24".to_string()), limit=limit.unwrap_or("25".to_string()));
-        match self.call_sleeper::<Vec<TrendingPlayer>>(url).await {
+        match self.get_url::<Vec<TrendingPlayer>>(url).await {
             Ok(players) => Ok(players),
             Err(e) => Err(e),
         }
     }
 
-    // Generic function to call any API endpoint modeled.
-    // Params are a hashmap of key value pairs to be used in the API call
-    // Params are validated before calling the API
+    /// Generic function to call any API endpoint modeled.
+    /// 
+    /// Params are a hashmap of key value pairs to be used in the API call
+    /// 
+    /// Params are validated before calling the API
     pub async fn get_data(
         &self,
         api: SleeperApi,
@@ -408,7 +410,7 @@ impl SleeperClient {
         }
     }
 
-    // Helper method to debug struct path errors
+    /// Helper method to debug struct path errors
     async fn get_err_path<T>(&self, response: Response) -> Result<T, String>
     where
         T: serde::de::DeserializeOwned,
@@ -417,17 +419,20 @@ impl SleeperClient {
             Ok(text) => text,
             Err(e) => return Err(e.to_string()),
         };
-        println!("{}", data);
+        //println!("{}", data);
         let deser = &mut Deserializer::from_str(data.as_str());
         let deser: Result<T, _> = serde_path_to_error::deserialize(deser);
         match deser {
             Ok(details) => Ok(details),
-            Err(e) => Err(e.path().to_string()),
+            Err(e) => {
+                eprintln!("Error deserializing data: {}", e);
+                Err(e.path().to_string())
+            },
         }
     }
 
     // Generic callable
-    async fn call_sleeper<T>(&self, url: String) -> Result<T, String>
+    async fn get_url<T>(&self, url: String) -> Result<T, String>
     where
         T: serde::de::DeserializeOwned,
     {
