@@ -41,7 +41,7 @@ pub async fn main() {
     let league_id = args.league_id;
     let sleeper_client = SleeperClient::build();
     let matchups = sleeper_client
-        .get_matchups_for_week(league_id.clone(), args.week)
+        .get_league_matchups_for_week(league_id.clone(), args.week)
         .await
         .unwrap();
     let rosters = sleeper_client

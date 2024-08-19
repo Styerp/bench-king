@@ -16,6 +16,7 @@ pub enum RosterPosition {
     FLEX,
     FS,
     G,
+    IDP_FLEX,
     ILB,
     K,
     #[serde(alias = "K/P")]
@@ -33,6 +34,7 @@ pub enum RosterPosition {
     RB,
     S,
     SS,
+    SUPER_FLEX,
     T,
     TE,
     WR,
@@ -54,6 +56,7 @@ impl RosterPosition {
             RosterPosition::FLEX => vec!["WR".to_string(), "RB".to_string(), "TE".to_string()], // WR/RB/TE Flex
             RosterPosition::FS => vec!["FS".to_string()],   // Free Safety
             RosterPosition::G => vec!["G".to_string()],     // Guard
+            RosterPosition::IDP_FLEX => vec!["IDP".to_string()], // IDP Flex
             RosterPosition::ILB => vec!["ILB".to_string()], // Inside Linebacker
             RosterPosition::K => vec!["K".to_string()], // Kicker
             RosterPosition::KP => vec!["K/P".to_string()], // Kicker/Punter
@@ -70,6 +73,7 @@ impl RosterPosition {
             RosterPosition::RB => vec!["RB".to_string()],   // Running Back
             RosterPosition::S => vec!["S".to_string()],     // Safety
             RosterPosition::SS => vec!["SS".to_string()],   // Strong Safety
+            RosterPosition::SUPER_FLEX => vec!["WR".to_string(), "RB".to_string(), "TE".to_string(), "QB".to_string()], // WR/RB/TE/QB Flex
             RosterPosition::T => vec!["T".to_string()],     // Tackle
             RosterPosition::TE => vec!["TE".to_string()],   // Tight End
             RosterPosition::WR => vec!["WR".to_string()],   // Wide Receiver

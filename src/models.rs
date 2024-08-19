@@ -6,3 +6,4 @@ pub mod roster;
 pub mod settings;
 pub mod state;
 pub mod user;
+pub mod playoff;
