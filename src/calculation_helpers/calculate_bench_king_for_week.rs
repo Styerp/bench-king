@@ -14,6 +14,7 @@ pub fn calculate_bench_king_for_week(
             .iter()
             .find(|r| r.roster_id == matchup.roster_id)
             .unwrap();
+        //println!("======== Owner: {:?} ========", owners.clone().into_iter().filter(|f| f.user_id == roster.owner_id).map(|m| m.display_name).collect::<Vec<_>>());
         let optimal_roster = optimal_score_for_matchup(
             matchup.clone(),
             roster.clone(),

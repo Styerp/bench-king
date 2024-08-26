@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use tokio::task::block_in_place;
-
 use crate::models::{
     matchup::Matchup,
     player::{PlayerDetails, Players},
@@ -62,18 +60,15 @@ pub fn optimal_score_for_matchup(
 
     let viable_players_with_stats = players
         .iter()
-        .filter(|(player_id, _)| match &roster.players {
-            Some(roster_players) => roster_players.iter().any(|rp| &rp == player_id),
-            None => false,
-        })
+        .filter(|(player_id, _)| matchup.players.iter().any(|p| &p == player_id))
         .map(|(_, details)| details)
         .collect::<Vec<&PlayerDetails>>();
-    println!("Viable Player Count: {:?}", viable_players_with_stats.len());
+    //println!("Viable Players: {:?}", viable_players_with_stats.iter().map(|p| (p.full_name.as_ref().unwrap_or(&p.player_id), p.position.unwrap_or(RosterPosition::SuperFlex))).collect::<Vec<(&String, RosterPosition)>>());
 
     let mut used_players = Vec::new();
     
     for (position, count) in roster_position_count {
-        println!("Drafting {} players for position {:?}", count, position);
+        //println!("Drafting {} players for position {:?}", count, position);
         let mut players_for_position = viable_players_with_stats
             .iter()
             .filter(|&player| match &player.fantasy_positions {
@@ -89,10 +84,10 @@ pub fn optimal_score_for_matchup(
             let b_pts = matchup.players_points.get(&b.player_id).unwrap_or(&0.0f32);
             a_pts.partial_cmp(b_pts).unwrap()
         });
-        println!("Players for position: {:?}", players_for_position.iter().map(|p| match &p.full_name {
-            Some(name) => (name.to_string(), matchup.players_points.get(&p.player_id).unwrap_or(&0.0f32)),
-            None => (p.player_id.to_string(), matchup.players_points.get(&p.player_id).unwrap_or(&0.0f32)),
-        }).collect::<Vec<(String,&f32)>>());
+        // println!("Players for position: {:?}", players_for_position.iter().map(|p| match &p.full_name {
+        //     Some(name) => (name.to_string(), matchup.players_points.get(&p.player_id).unwrap_or(&0.0f32)),
+        //     None => (p.player_id.to_string(), matchup.players_points.get(&p.player_id).unwrap_or(&0.0f32)),
+        // }).collect::<Vec<(String,&f32)>>());
         for _l in 0..count {
             //println!("Looop count: {}, Player Count: {}, Position: {:?}", l, players_for_position.len(), position.value());
             let (player, up, pfp) = get_player(&used_players, players_for_position);
@@ -100,7 +95,7 @@ pub fn optimal_score_for_matchup(
             players_for_position = pfp;
             let player_id = &player.player_id;
             let points = matchup.players_points.get(player_id).unwrap_or(&0.0f32);
-            //println!("Player: {:?}; Points: {}", player.full_name.as_ref().unwrap_or(&"Unknown".to_string()), points);
+            //println!("Player: {:?}; Points: {}", player.full_name.as_ref().unwrap_or(&player.player_id), points);
             optimal_roster.optimal_points += points;
             used_players.push(player_id.to_string());
         }
@@ -112,7 +107,7 @@ fn get_player(used_players: &Vec<String>, mut players: Vec<PlayerDetails>) -> (P
     match players.pop() {
         Some(p) => {
             if used_players.contains(&p.player_id) {
-                println!("Player already used: {:?}", p.full_name.as_ref().unwrap_or(&p.player_id));
+                //println!("Player already used: {:?}", p.full_name.as_ref().unwrap_or(&p.player_id));
                 get_player(&[used_players.clone(), vec![p.player_id.clone()]].concat(), players.clone());
             }
             (p.clone().clone(), [used_players.clone(), vec![p.player_id.clone()]].concat(), players)
