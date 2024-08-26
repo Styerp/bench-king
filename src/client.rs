@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, time::Duration};
+use std::time::Duration;
 
 use http_cache_reqwest::{
     CACacheManager, Cache, CacheMode, CacheOptions, HttpCache, HttpCacheOptions,
@@ -8,7 +8,12 @@ use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Deserializer;
 
 use crate::models::{
-    league::League, matchup::Matchup, player::{Players, TrendingPlayer}, playoff::Playoff, roster::Roster, user::{LeagueUser, User}
+    league::League,
+    matchup::Matchup,
+    player::{Players, TrendingPlayer},
+    playoff::Playoff,
+    roster::Roster,
+    user::{LeagueUser, User},
 };
 
 const BASE_URL: &'static str = "https://api.sleeper.app/v1/";
@@ -80,11 +85,7 @@ impl SleeperClient {
         }
     }
 
-    pub fn get_avatar_url(
-        &self,
-        avatar_id: String,
-        full_or_thumb: AvatarType,
-    ) -> String {
+    pub fn get_avatar_url(&self, avatar_id: String, full_or_thumb: AvatarType) -> String {
         let full_or_thumb = match full_or_thumb {
             AvatarType::Full => "",
             AvatarType::Thumb => "thumb",
@@ -152,7 +153,7 @@ impl SleeperClient {
         league_id: String,
         winner_or_loser: WinnerOrLoser,
     ) -> Result<Vec<Playoff>, String> {
-        return Err(NotImplementedError.to_string());
+        //return Err(NotImplementedError.to_string());
         let url = match winner_or_loser {
             WinnerOrLoser::Winner => format!("{BASE_URL}league/{}/winners_bracket", league_id),
             WinnerOrLoser::Loser => format!("{BASE_URL}league/{}/losers_bracket", league_id),
@@ -199,7 +200,7 @@ impl SleeperClient {
             Ok(text) => text,
             Err(e) => return Err(e.to_string()),
         };
-        println!("{}", data);
+        // println!("{}", data);
         let deser = &mut Deserializer::from_str(data.as_str());
         let deser: Result<T, _> = serde_path_to_error::deserialize(deser);
         match deser {
@@ -207,7 +208,7 @@ impl SleeperClient {
             Err(e) => {
                 eprintln!("Error deserializing data: {}", e);
                 Err(e.path().to_string())
-            },
+            }
         }
     }
 

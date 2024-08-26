@@ -49,12 +49,18 @@ pub async fn main() {
         .await
         .unwrap();
     let players = sleeper_client.fetch_all_players().await.unwrap();
-    let league = sleeper_client.get_league_details(league_id.clone()).await.unwrap();
-    let owners = sleeper_client.get_users_in_league(league_id.clone()).await.unwrap();
+    let league = sleeper_client
+        .get_league_details(league_id.clone())
+        .await
+        .unwrap();
+    let owners = sleeper_client
+        .get_users_in_league(league_id.clone())
+        .await
+        .unwrap();
 
     let mut optimals = calculate_bench_king_for_week(matchups, rosters, players, league, owners);
-    optimals.sort_by_key(|a| a.difference() as i32);
-    for (idx,optimal) in optimals.iter().enumerate() {
+    optimals.sort_by_key(|a| -1 * a.difference() as i32);
+    for (idx, optimal) in optimals.iter().enumerate() {
         println!("Bench King Rank: {}: {}", idx + 1, optimal);
     }
     //println!("{:#?}", optimals);

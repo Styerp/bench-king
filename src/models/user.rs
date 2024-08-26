@@ -27,7 +27,6 @@ pub struct User {
     pub verification: Option<String>,
 }
 
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LeagueUser {
     pub username: Option<String>,

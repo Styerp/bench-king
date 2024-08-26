@@ -2,7 +2,7 @@ use std::vec;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum RosterPosition {
     BN,
     C,
@@ -16,7 +16,8 @@ pub enum RosterPosition {
     FLEX,
     FS,
     G,
-    IDP_FLEX,
+    #[serde(alias = "IDP_FLEX")]
+    IdpFlex,
     ILB,
     K,
     #[serde(alias = "K/P")]
@@ -34,11 +35,13 @@ pub enum RosterPosition {
     RB,
     S,
     SS,
-    SUPER_FLEX,
+    #[serde(alias = "SUPER_FLEX")]
+    SuperFlex,
     T,
     TE,
     WR,
-    WRRB_FLEX,
+    #[serde(alias = "WRRB_FLEX")]
+    WrRbFlex,
 }
 
 impl RosterPosition {
@@ -54,11 +57,11 @@ impl RosterPosition {
             RosterPosition::DT => vec!["DT".to_string()],   // Defensive Tackle
             RosterPosition::FB => vec!["FB".to_string()],   // Fullback
             RosterPosition::FLEX => vec!["WR".to_string(), "RB".to_string(), "TE".to_string()], // WR/RB/TE Flex
-            RosterPosition::FS => vec!["FS".to_string()],   // Free Safety
-            RosterPosition::G => vec!["G".to_string()],     // Guard
-            RosterPosition::IDP_FLEX => vec!["IDP".to_string()], // IDP Flex
+            RosterPosition::FS => vec!["FS".to_string()], // Free Safety
+            RosterPosition::G => vec!["G".to_string()],   // Guard
+            RosterPosition::IdpFlex => vec!["IDP".to_string()], // IDP Flex
             RosterPosition::ILB => vec!["ILB".to_string()], // Inside Linebacker
-            RosterPosition::K => vec!["K".to_string()], // Kicker
+            RosterPosition::K => vec!["K".to_string()],   // Kicker
             RosterPosition::KP => vec!["K/P".to_string()], // Kicker/Punter
             RosterPosition::LB => vec!["LB".to_string()], // Linebacker
             RosterPosition::LEO => vec!["LEO".to_string()], // TODO: Is LEO included in fanatsy matchup data? LEO ~= LB + DE
@@ -73,11 +76,16 @@ impl RosterPosition {
             RosterPosition::RB => vec!["RB".to_string()],   // Running Back
             RosterPosition::S => vec!["S".to_string()],     // Safety
             RosterPosition::SS => vec!["SS".to_string()],   // Strong Safety
-            RosterPosition::SUPER_FLEX => vec!["WR".to_string(), "RB".to_string(), "TE".to_string(), "QB".to_string()], // WR/RB/TE/QB Flex
+            RosterPosition::SuperFlex => vec![
+                "WR".to_string(),
+                "RB".to_string(),
+                "TE".to_string(),
+                "QB".to_string(),
+            ], // WR/RB/TE/QB Flex
             RosterPosition::T => vec!["T".to_string()],     // Tackle
             RosterPosition::TE => vec!["TE".to_string()],   // Tight End
             RosterPosition::WR => vec!["WR".to_string()],   // Wide Receiver
-            RosterPosition::WRRB_FLEX => vec!["WR".to_string(), "RB".to_string()], // WR/RB Flex
+            RosterPosition::WrRbFlex => vec!["WR".to_string(), "RB".to_string()], // WR/RB Flex
         }
     }
 }

@@ -51,15 +51,15 @@ pub struct RosterSettings {
     pub fpts_against_decimal: Option<f32>,
     pub fpts_against: Option<u64>,
     pub fpts: u64,
-    pub division: u8,
+    pub division: Option<u8>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RosterMetadata {
-    pub allow_pn_inactive_starters: String,
-    pub allow_pn_player_injury_status: String,
-    pub allow_pn_scoring: String,
-    pub restrict_pn_scoring_starters_only: String,
+    pub allow_pn_inactive_starters: Option<String>,
+    pub allow_pn_player_injury_status: Option<String>,
+    pub allow_pn_scoring: Option<String>,
+    pub restrict_pn_scoring_starters_only: Option<String>,
 }
 
 impl std::fmt::Display for RosterMetadata {

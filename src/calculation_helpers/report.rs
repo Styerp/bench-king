@@ -15,8 +15,8 @@ impl std::fmt::Display for Report {
             f,
             "Owner {} scored {} points, optimal score is {}, difference is {}",
             self.owner_name,
-            self.optimal_points,
             self.actual_points,
+            self.optimal_points,
             self.difference()
         )
     }
