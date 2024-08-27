@@ -1,4 +1,4 @@
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Report {
     pub owner_name: String,
     pub optimal_points: f32,
@@ -15,9 +15,13 @@ impl std::fmt::Display for Report {
             f,
             "Owner {} scored {} points, optimal score is {}, difference is {}",
             self.owner_name,
-            self.actual_points,
-            self.optimal_points,
-            self.difference()
+            round_to_two_decimals(self.actual_points),
+            round_to_two_decimals(self.optimal_points),
+            round_to_two_decimals(self.difference())
         )
     }
+}
+
+fn round_to_two_decimals(f: f32) -> f32 {
+    (f * 100.0).round() / 100.0
 }

@@ -138,7 +138,7 @@ impl SleeperClient {
     pub async fn get_league_matchups_for_week(
         &self,
         league_id: String,
-        week: String,
+        week: i32,
     ) -> Result<Vec<Matchup>, String> {
         let url = format!("{BASE_URL}league/{}/matchups/{}", league_id, week);
         match self.get_url(url).await {

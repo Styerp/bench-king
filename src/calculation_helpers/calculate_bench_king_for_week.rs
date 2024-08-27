@@ -3,10 +3,10 @@ use crate::models::*;
 
 pub fn calculate_bench_king_for_week(
     matchups: Vec<matchup::Matchup>,
-    rosters: Vec<roster::Roster>,
-    players: player::Players,
-    league: league::League,
-    owners: Vec<user::LeagueUser>,
+    rosters: &Vec<roster::Roster>,
+    players: &player::Players,
+    league: &league::League,
+    owners: &Vec<user::LeagueUser>,
 ) -> Vec<Report> {
     let mut optimals = vec![];
     for matchup in matchups {
