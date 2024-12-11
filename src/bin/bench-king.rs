@@ -56,9 +56,8 @@ pub async fn main() {
         .get_users_in_league(league_id.clone())
         .await
         .unwrap();
-    let mut optimals ;
+    let mut optimals;
     if args.season_to_date {
-
         let mut week_map: HashMap<String, Vec<Report>> = HashMap::new();
         for week in 1..args.week {
             let matchups = sleeper_client
@@ -69,35 +68,37 @@ pub async fn main() {
                 calculate_bench_king_for_week(matchups, &rosters, &players, &league, &owners);
             for optimal in optimals {
                 week_map
-                    .entry(optimal.owner_name.clone()).and_modify(|f| f.push(optimal.clone()))
+                    .entry(optimal.owner_name.clone())
+                    .and_modify(|f| f.push(optimal.clone()))
                     .or_insert(vec![optimal.clone()]);
             }
         }
-        optimals = week_map.iter().map(|(owner, reports)| {
-            let mut total_optimal_points = 0.0;
-            let mut total_actual_points = 0.0;
-            for report in reports {
-                total_optimal_points += report.optimal_points;
-                total_actual_points += report.actual_points;
-            }
-            Report {
-                owner_name: owner.clone(),
-                optimal_points: total_optimal_points,
-                actual_points: total_actual_points,
-            }
-        }).collect();
-
+        optimals = week_map
+            .iter()
+            .map(|(owner, reports)| {
+                let mut total_optimal_points = 0.0;
+                let mut total_actual_points = 0.0;
+                for report in reports {
+                    total_optimal_points += report.optimal_points;
+                    total_actual_points += report.actual_points;
+                }
+                Report {
+                    owner_name: owner.clone(),
+                    optimal_points: total_optimal_points,
+                    actual_points: total_actual_points,
+                }
+            })
+            .collect();
     } else {
         let matchups = sleeper_client
-                .get_league_matchups_for_week(league_id.clone(), args.week)
-                .await
-                .unwrap();
-        optimals =
-            calculate_bench_king_for_week(matchups, &rosters, &players, &league, &owners);
+            .get_league_matchups_for_week(league_id.clone(), args.week)
+            .await
+            .unwrap();
+        optimals = calculate_bench_king_for_week(matchups, &rosters, &players, &league, &owners);
     }
     optimals.sort_by_key(|a| -1 * a.difference() as i32);
-        for (idx, optimal) in optimals.iter().enumerate() {
-            println!("Bench King Rank: {}: {}", idx + 1, optimal);
-        }
+    for (idx, optimal) in optimals.iter().enumerate() {
+        println!("Bench King Rank: {}: {}", idx + 1, optimal);
+    }
     //println!("{:#?}", optimals);
 }

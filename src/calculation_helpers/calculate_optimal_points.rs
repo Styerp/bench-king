@@ -66,15 +66,15 @@ pub fn optimal_score_for_matchup(
     //println!("Viable Players: {:?}", viable_players_with_stats.iter().map(|p| (p.full_name.as_ref().unwrap_or(&p.player_id), p.position.unwrap_or(RosterPosition::SuperFlex))).collect::<Vec<(&String, RosterPosition)>>());
 
     let mut used_players = Vec::new();
-    
+
     for (position, count) in roster_position_count {
         //println!("Drafting {} players for position {:?}", count, position);
         let mut players_for_position = viable_players_with_stats
             .iter()
             .filter(|&player| match &player.fantasy_positions {
-                Some(fp) => {
-                    fp.iter().any(|p| position.value().iter().any(|v| p.value().contains(v)))
-                },
+                Some(fp) => fp
+                    .iter()
+                    .any(|p| position.value().iter().any(|v| p.value().contains(v))),
                 None => false,
             })
             .map(|p| p.to_owned().to_owned())
@@ -103,17 +103,25 @@ pub fn optimal_score_for_matchup(
     optimal_roster
 }
 
-fn get_player(used_players: &Vec<String>, mut players: Vec<PlayerDetails>) -> (PlayerDetails, Vec<String>, Vec<PlayerDetails>) {
+fn get_player(
+    used_players: &Vec<String>,
+    mut players: Vec<PlayerDetails>,
+) -> (PlayerDetails, Vec<String>, Vec<PlayerDetails>) {
     match players.pop() {
         Some(p) => {
             if used_players.contains(&p.player_id) {
                 //println!("Player already used: {:?}", p.full_name.as_ref().unwrap_or(&p.player_id));
-                get_player(&[used_players.clone(), vec![p.player_id.clone()]].concat(), players.clone());
+                get_player(
+                    &[used_players.clone(), vec![p.player_id.clone()]].concat(),
+                    players.clone(),
+                );
             }
-            (p.clone().clone(), [used_players.clone(), vec![p.player_id.clone()]].concat(), players)
-        },
-        None => {
-            get_player(used_players, players)
-        },
+            (
+                p.clone().clone(),
+                [used_players.clone(), vec![p.player_id.clone()]].concat(),
+                players,
+            )
+        }
+        None => get_player(used_players, players),
     }
 }

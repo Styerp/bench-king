@@ -27,7 +27,7 @@ pub struct User {
     pub verification: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Hash, PartialEq, Eq)]
 pub struct LeagueUser {
     pub username: Option<String>,
     pub user_id: UserId,
@@ -39,7 +39,7 @@ pub struct LeagueUser {
     pub settings: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Hash, PartialEq, Eq)]
 pub struct LeagueUserMetadata {
     pub team_name: Option<String>,
     // pn == Push Notification
