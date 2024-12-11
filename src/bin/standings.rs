@@ -50,7 +50,7 @@ pub struct Standing {
     rank_league: usize,
     rank_head_to_head: usize,
     rank_combined: usize,
-    season_performance: SeasonPerformance
+    season_performance: SeasonPerformance,
 }
 
 impl std::fmt::Display for Standing {
@@ -58,6 +58,7 @@ impl std::fmt::Display for Standing {
         write!(
             f,
             r#"Team {} ranked {} by head to head wins, {} by league wins, and {} combined.
+    Rank delta: {}
     Records:
         {}-{} Head to Head
         {}-{} League
@@ -65,13 +66,19 @@ impl std::fmt::Display for Standing {
         Pts for :    {}
         Pts against: {}
             "#,
-            self.team_name, self.rank_head_to_head + 1, self.rank_league + 1, self.rank_combined +1,
-            self.season_performance.head_to_head_wins, self.season_performance.head_to_head_losses,
-
-            self.season_performance.league_wins, self.season_performance.league_losses,
+            self.team_name,
+            self.rank_head_to_head + 1,
+            self.rank_league + 1,
+            self.rank_combined + 1,
+            (self.rank_combined as i8 - self.rank_head_to_head as i8).abs(),
+            self.season_performance.head_to_head_wins,
+            self.season_performance.head_to_head_losses,
+            self.season_performance.league_wins,
+            self.season_performance.league_losses,
             self.season_performance.head_to_head_wins + self.season_performance.league_wins,
             self.season_performance.head_to_head_losses + self.season_performance.league_losses,
-            self.season_performance.points_for, self.season_performance.points_against
+            self.season_performance.points_for,
+            self.season_performance.points_against
         )
     }
 }
@@ -80,13 +87,13 @@ fn calc_ranks(inputs: Vec<SeasonPerformance>) -> Vec<Standing> {
     let mut standings: HashMap<_, Standing> = HashMap::new();
 
     let mut head = inputs.clone();
-    head.sort_by_key(|a| (-a.head_to_head_wins, a.head_to_head_losses, -a.points_for as i8, -a.points_against as i8));
+    head.sort_by_key(|a| (-a.head_to_head_wins, -a.points_for as i32));
 
     let mut league = inputs.clone();
-    league.sort_by_key(|a| (-a.league_wins, a.league_losses, -a.points_for  as i8, -a.points_against as i8));
+    league.sort_by_key(|a| (-a.league_wins, -a.points_for as i32));
 
     let mut comb = inputs.clone();
-    comb.sort_by_key(|a| (-(a.league_wins + a.head_to_head_wins),(a.league_losses + a.head_to_head_losses), -a.points_for  as i8, -a.points_against  as i8));
+    comb.sort_by_key(|a| (-(a.league_wins + a.head_to_head_wins), -a.points_for as i32));
     for inp in &inputs {
         let hhr = head
             .iter()
@@ -107,7 +114,7 @@ fn calc_ranks(inputs: Vec<SeasonPerformance>) -> Vec<Standing> {
                 rank_head_to_head: hhr,
                 rank_combined: cr,
                 rank_league: lhr,
-                season_performance: inp.clone()
+                season_performance: inp.clone(),
             }
         });
     }
@@ -127,24 +134,17 @@ async fn calculate_season_performances(league_id: String) -> Vec<SeasonPerforman
         .unwrap();
 
     let mut data: HashMap<UserId, SeasonPerformance> = HashMap::new();
-    for week in 1..(THROUGH_WEEK+1) {
+    for week in 1..(THROUGH_WEEK + 1) {
         let wk = client
             .get_league_matchups_for_week(league_id.clone(), week)
             .await
             .unwrap();
-        let median_setup = wk
+        let mut median_setup: Vec<f32> = wk
             .iter()
-            .map(|m| {
-                m.starters_points
-                    .clone()
-                    .into_iter()
-                    .map(|a| a as usize)
-                    .sum::<usize>()
-                    .clone()
-            })
-            .reduce(|acc, val| (acc + val))
-            .unwrap();
-        let median: usize = median_setup.clone() / wk.len();
+            .map(|m| m.starters_points.clone().iter().sum())
+            .collect();
+        median_setup.sort_by_key(|a| (a * 1000.0 )as i32);
+        let median = (median_setup.get(6).unwrap() + median_setup.get(7).unwrap()) / 2.0;
         for matchup in &wk {
             let opp = &wk
                 .iter()
@@ -156,18 +156,8 @@ async fn calculate_season_performances(league_id: String) -> Vec<SeasonPerforman
                 .find(|r| &r.roster_id == &matchup.roster_id)
                 .unwrap();
             let owner = teams.iter().find(|t| t.user_id == roster.owner_id).unwrap();
-            let pts = matchup
-                .starters_points
-                .clone()
-                .into_iter()
-                .map(|x| x as usize)
-                .sum::<usize>();
-            let opp_pts = opp
-                .starters_points
-                .clone()
-                .into_iter()
-                .map(|x| x as usize)
-                .sum::<usize>();
+            let pts: f32 = matchup.starters_points.clone().iter().sum();
+            let opp_pts = opp.starters_points.clone().iter().sum();
             let wk_perf = SeasonPerformance {
                 team_name: owner.display_name.clone(),
                 head_to_head_wins: if pts > opp_pts { 1 } else { 0 },
