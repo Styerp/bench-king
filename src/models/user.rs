@@ -33,7 +33,7 @@ pub struct LeagueUser {
     pub user_id: UserId,
     pub display_name: String,
     pub avatar: String,
-    pub metadata: LeagueUserMetadata,
+    pub metadata: Option<LeagueUserMetadata>,
     pub is_owner: Option<bool>,
     pub is_bot: bool,
     pub settings: Option<String>,

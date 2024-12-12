@@ -1,11 +1,20 @@
 use std::collections::HashMap;
 
-use bench_king_sleeper::{client::SleeperClient, models::user::UserId};
+use bench_king_sleeper::{
+    client::SleeperClient,
+    models::{
+        matchup::Matchup,
+        roster::Roster,
+        user::{LeagueUser, UserId},
+    },
+};
+use serde::{Deserialize, Serialize};
 
 const LEAGUE_ID: &str = "1124926301107884032";
 const THROUGH_WEEK: i32 = 14;
-#[derive(Clone)]
-pub struct SeasonPerformance {
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
+struct SeasonPerformance {
     team_name: String,
     head_to_head_wins: i8,
     head_to_head_losses: i8,
@@ -14,6 +23,8 @@ pub struct SeasonPerformance {
     points_for: f32,
     points_against: f32,
 }
+
+impl Eq for SeasonPerformance {}
 
 impl std::ops::Add for SeasonPerformance {
     type Output = SeasonPerformance;
@@ -45,7 +56,7 @@ impl std::ops::AddAssign for SeasonPerformance {
 }
 
 #[derive(Clone)]
-pub struct Standing {
+struct Standing {
     team_name: String,
     rank_league: usize,
     rank_head_to_head: usize,
@@ -125,6 +136,37 @@ fn calc_ranks(inputs: Vec<SeasonPerformance>) -> Vec<Standing> {
     final_data
 }
 
+fn calculate_week_performance(
+    matchup: &Matchup,
+    matchups: &Vec<Matchup>,
+    rosters: &Vec<Roster>,
+    teams: &Vec<LeagueUser>,
+    median: f32,
+) -> SeasonPerformance {
+    let opp = matchups
+        .iter()
+        .find(|f| &f.matchup_id == &matchup.matchup_id && f.roster_id != matchup.roster_id)
+        .unwrap()
+        .clone();
+    let roster = rosters
+        .iter()
+        .find(|r| &r.roster_id == &matchup.roster_id)
+        .unwrap();
+    let owner = teams.iter().find(|t| t.user_id == roster.owner_id).unwrap();
+    let pts: f32 = matchup.starters_points.clone().iter().sum();
+    let opp_pts = opp.starters_points.clone().iter().sum();
+    let wk_perf = SeasonPerformance {
+        team_name: owner.display_name.clone(),
+        head_to_head_wins: if pts > opp_pts { 1 } else { 0 },
+        head_to_head_losses: if pts < opp_pts { 1 } else { 0 },
+        league_wins: if pts > median { 1 } else { 0 },
+        league_losses: if pts < median { 1 } else { 0 },
+        points_for: matchup.starters_points.iter().sum(),
+        points_against: opp.starters_points.iter().sum(),
+    };
+    wk_perf
+}
+
 async fn calculate_season_performances(league_id: String) -> Vec<SeasonPerformance> {
     let client = SleeperClient::build();
     let teams = client.get_users_in_league(league_id.clone()).await.unwrap();
@@ -143,33 +185,13 @@ async fn calculate_season_performances(league_id: String) -> Vec<SeasonPerforman
             .iter()
             .map(|m| m.starters_points.clone().iter().sum())
             .collect();
-        median_setup.sort_by_key(|a| (a * 1000.0 )as i32);
+        median_setup.sort_by_key(|a| (a * 1000.0) as i32);
         let median = (median_setup.get(6).unwrap() + median_setup.get(7).unwrap()) / 2.0;
         for matchup in &wk {
-            let opp = &wk
-                .iter()
-                .find(|f| &f.matchup_id == &matchup.matchup_id && f.roster_id != matchup.roster_id)
-                .unwrap()
-                .clone();
-            let roster = rosters
-                .iter()
-                .find(|r| &r.roster_id == &matchup.roster_id)
-                .unwrap();
-            let owner = teams.iter().find(|t| t.user_id == roster.owner_id).unwrap();
-            let pts: f32 = matchup.starters_points.clone().iter().sum();
-            let opp_pts = opp.starters_points.clone().iter().sum();
-            let wk_perf = SeasonPerformance {
-                team_name: owner.display_name.clone(),
-                head_to_head_wins: if pts > opp_pts { 1 } else { 0 },
-                head_to_head_losses: if pts < opp_pts { 1 } else { 0 },
-                league_wins: if pts > median { 1 } else { 0 },
-                league_losses: if pts < median { 1 } else { 0 },
-                points_for: matchup.starters_points.iter().sum(),
-                points_against: opp.starters_points.iter().sum(),
-            };
-            data.entry(owner.user_id.clone())
+            let wk_perf = calculate_week_performance(matchup, &wk, &rosters, &teams, median);
+            data.entry(wk_perf.team_name.clone())
                 .and_modify(|r| *r += wk_perf.clone())
-                .or_insert(wk_perf.clone());
+                .or_insert(wk_perf);
         }
     }
     let mut final_data: Vec<SeasonPerformance> = vec![];
@@ -186,5 +208,215 @@ async fn main() {
     ranks.sort_by_key(|a| a.rank_head_to_head);
     for r in ranks {
         println!("{}", r)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bench_king_sleeper::models::roster::RosterSettings;
+    #[test]
+    fn test_calculate_week_performance() {
+        let matchups = vec![
+            Matchup {
+                matchup_id: 1,
+                starters: Vec::new(),
+                roster_id: 1,
+                players: Vec::new(),
+                points: 132.1,
+                custom_points: Some(0.0),
+                players_points: HashMap::from_iter(vec![("a".to_string(), 1.0)]),
+                starters_points: vec![1.0, 2.0, 3.0, 4.0, 5.0],
+            },
+            Matchup {
+                matchup_id: 1,
+                starters: Vec::new(),
+                roster_id: 2,
+                players: Vec::new(),
+                points: 133.1,
+                custom_points: Some(0.0),
+                players_points: HashMap::from_iter(vec![("a".to_string(), 1.0)]),
+                starters_points: vec![1.0, 2.0, 3.0, 4.0, 6.0],
+            },
+            Matchup {
+                matchup_id: 2,
+                starters: Vec::new(),
+                roster_id: 3,
+                players: Vec::new(),
+                points: 132.1,
+                custom_points: Some(0.0),
+                players_points: HashMap::from_iter(vec![("a".to_string(), 1.0)]),
+                starters_points: vec![1.0, 2.0, 3.0, 4.0, 17.0],
+            },
+            Matchup {
+                matchup_id: 2,
+                starters: Vec::new(),
+                roster_id: 4,
+                players: Vec::new(),
+                points: 132.1,
+                custom_points: Some(0.0),
+                players_points: HashMap::from_iter(vec![("a".to_string(), 1.0)]),
+                starters_points: vec![1.0, 2.0, 3.0],
+            },
+        ];
+        let roster_settings = RosterSettings {
+            wins: 0,
+            waiver_position: 0,
+            waiver_budget_used: 0100,
+            total_moves: 0100,
+            ties: 0,
+            losses: 0,
+            fpts_decimal: Some(0.0),
+            fpts_against_decimal: Some(0.0),
+            fpts_against: Some(0),
+            fpts: 0,
+            division: Some(1),
+        };
+        let rosters = vec![
+            Roster {
+                roster_id: 1,
+                owner_id: "ME!".to_string(),
+                starters: Vec::new(),
+                settings: roster_settings.clone(),
+                co_owners: None,
+                reserve: None,
+                players: None,
+                player_map: None,
+                league_id: LEAGUE_ID.to_string(),
+                keepers: None,
+                metadata: None,
+            },
+            Roster {
+                roster_id: 2,
+                owner_id: "YOU!".to_string(),
+                starters: Vec::new(),
+                settings: roster_settings.clone(),
+                co_owners: None,
+                reserve: None,
+                players: None,
+                player_map: None,
+                league_id: LEAGUE_ID.to_string(),
+                keepers: None,
+                metadata: None,
+            },
+            Roster {
+                roster_id: 3,
+                owner_id: "EVERYONE!".to_string(),
+                starters: Vec::new(),
+                settings: roster_settings.clone(),
+                co_owners: None,
+                reserve: None,
+                players: None,
+                player_map: None,
+                league_id: LEAGUE_ID.to_string(),
+                keepers: None,
+                metadata: None,
+            },
+            Roster {
+                roster_id: 4,
+                owner_id: "McJesus!".to_string(),
+                starters: Vec::new(),
+                settings: roster_settings,
+                co_owners: None,
+                reserve: None,
+                players: None,
+                player_map: None,
+                league_id: LEAGUE_ID.to_string(),
+                keepers: None,
+                metadata: None,
+            },
+        ];
+        let teams = vec![
+            LeagueUser {
+            username: Some("Someone".to_string()),
+            user_id: "ME!".to_string(),
+            display_name: "Pete'sFarts".to_string(),
+            avatar: "123".to_string(),
+            metadata: None,
+            is_owner: Some(true),
+            is_bot: false,
+            settings: None,
+        },
+        LeagueUser {
+            username: Some("Someone".to_string()),
+            user_id: "YOU!".to_string(),
+            display_name: "YOU!".to_string(),
+            avatar: "123".to_string(),
+            metadata: None,
+            is_owner: Some(true),
+            is_bot: false,
+            settings: None,
+        },LeagueUser {
+            username: Some("Someone".to_string()),
+            user_id: "EVERYONE!".to_string(),
+            display_name: "EVERYONE!".to_string(),
+            avatar: "123".to_string(),
+            metadata: None,
+            is_owner: Some(true),
+            is_bot: false,
+            settings: None,
+        },LeagueUser {
+            username: Some("Someone".to_string()),
+            user_id: "McJesus!".to_string(),
+            display_name: "McJesus!".to_string(),
+            avatar: "123".to_string(),
+            metadata: None,
+            is_owner: Some(true),
+            is_bot: false,
+            settings: None,
+        },
+
+        
+        
+        ];
+        let expecteds = vec![
+            SeasonPerformance {
+                head_to_head_losses: 1,
+                head_to_head_wins: 0,
+                team_name: "Pete'sFarts".to_string(),
+                league_wins: 1,
+                league_losses: 0,
+                points_against: 16.0,
+                points_for: 15.0,
+            },
+            SeasonPerformance {
+                head_to_head_losses: 0,
+                head_to_head_wins: 1,
+                team_name: "YOU!".to_string(),
+                league_wins: 1,
+                league_losses: 0,
+                points_against: 15.0,
+                points_for: 16.0,
+            },
+            SeasonPerformance {
+                head_to_head_losses: 0,
+                head_to_head_wins: 1,
+                team_name: "EVERYONE!".to_string(),
+                league_wins: 1,
+                league_losses: 0,
+                points_against: 6.0,
+                points_for: 27.0,
+            },
+            SeasonPerformance {
+                head_to_head_losses: 1,
+                head_to_head_wins: 0,
+                team_name: "McJesus!".to_string(),
+                league_wins: 0,
+                league_losses: 1,
+                points_against: 27.0,
+                points_for: 6.0,
+            },
+        ];
+        for (idx, matchup) in matchups.iter().enumerate() {
+            let actual = calculate_week_performance(matchup, &matchups, &rosters, &teams, 10.0);
+            let expected = expecteds.get(idx).unwrap();
+            assert_eq!(actual.head_to_head_losses, expected.head_to_head_losses);
+            assert_eq!(actual.head_to_head_wins, expected.head_to_head_wins);
+            assert_eq!(actual.league_losses, expected.league_losses);
+            assert_eq!(actual.league_wins, expected.league_wins);
+            assert_eq!(actual.points_against, expected.points_against);
+            assert_eq!(actual.points_for, expected.points_for);
+            assert_eq!(actual.team_name, expected.team_name);
+        }
     }
 }

@@ -1,3 +1,6 @@
 /target
-/http-cacache
+/http-cacachei
 *.txt
+.vscode
+target/
+http-cacache/
