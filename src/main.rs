@@ -7,9 +7,10 @@ const HAYDEN_LEAGUE_ID: &str = "1004906699078828032";
 #[tokio::main]
 async fn main() {
     let sleeper_client = SleeperClient::build();
+    let league_id = LEAGUE_ID.to_string();
 
     let resp = sleeper_client
-        .get_league_matchups_for_week(LEAGUE_ID.to_string(), 3)
+        .get_league_matchups_for_week(&league_id, 3)
         .await;
     // let league_users = sleeper_client
     //     .get_users_in_league(LEAGUE_ID.to_string())

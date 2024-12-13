@@ -44,16 +44,16 @@ pub async fn main() {
     let league_id = args.league_id;
     let sleeper_client = SleeperClient::build();
     let rosters = sleeper_client
-        .get_rosters_in_league(league_id.clone())
+        .get_rosters_in_league(&league_id)
         .await
         .unwrap();
     let players = sleeper_client.fetch_all_players().await.unwrap();
     let league = sleeper_client
-        .get_league_details(league_id.clone())
+        .get_league_details(&league_id)
         .await
         .unwrap();
     let owners = sleeper_client
-        .get_users_in_league(league_id.clone())
+        .get_users_in_league(&league_id)
         .await
         .unwrap();
     let mut optimals;
@@ -61,7 +61,7 @@ pub async fn main() {
         let mut week_map: HashMap<String, Vec<Report>> = HashMap::new();
         for week in 1..args.week {
             let matchups = sleeper_client
-                .get_league_matchups_for_week(league_id.clone(), week)
+                .get_league_matchups_for_week(&league_id, week)
                 .await
                 .unwrap();
             let optimals =
@@ -91,7 +91,7 @@ pub async fn main() {
             .collect();
     } else {
         let matchups = sleeper_client
-            .get_league_matchups_for_week(league_id.clone(), args.week)
+            .get_league_matchups_for_week(&league_id, args.week)
             .await
             .unwrap();
         optimals = calculate_bench_king_for_week(matchups, &rosters, &players, &league, &owners);

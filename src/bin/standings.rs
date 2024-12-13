@@ -30,7 +30,7 @@ impl std::ops::Add for SeasonPerformance {
     type Output = SeasonPerformance;
     fn add(self, rhs: Self) -> Self::Output {
         SeasonPerformance {
-            team_name: self.team_name.clone(),
+            team_name: self.team_name,
             head_to_head_wins: self.head_to_head_wins + rhs.head_to_head_wins,
             head_to_head_losses: self.head_to_head_losses + rhs.head_to_head_losses,
             league_wins: self.league_wins + rhs.league_wins,
@@ -169,16 +169,16 @@ fn calculate_week_performance(
 
 async fn calculate_season_performances(league_id: String) -> Vec<SeasonPerformance> {
     let client = SleeperClient::build();
-    let teams = client.get_users_in_league(league_id.clone()).await.unwrap();
+    let teams = client.get_users_in_league(&league_id).await.unwrap();
     let rosters = client
-        .get_rosters_in_league(league_id.clone())
+        .get_rosters_in_league(&league_id)
         .await
         .unwrap();
 
     let mut data: HashMap<UserId, SeasonPerformance> = HashMap::new();
     for week in 1..(THROUGH_WEEK + 1) {
         let wk = client
-            .get_league_matchups_for_week(league_id.clone(), week)
+            .get_league_matchups_for_week(&league_id, week)
             .await
             .unwrap();
         let mut median_setup: Vec<f32> = wk
@@ -328,46 +328,45 @@ mod tests {
         ];
         let teams = vec![
             LeagueUser {
-            username: Some("Someone".to_string()),
-            user_id: "ME!".to_string(),
-            display_name: "Pete'sFarts".to_string(),
-            avatar: "123".to_string(),
-            metadata: None,
-            is_owner: Some(true),
-            is_bot: false,
-            settings: None,
-        },
-        LeagueUser {
-            username: Some("Someone".to_string()),
-            user_id: "YOU!".to_string(),
-            display_name: "YOU!".to_string(),
-            avatar: "123".to_string(),
-            metadata: None,
-            is_owner: Some(true),
-            is_bot: false,
-            settings: None,
-        },LeagueUser {
-            username: Some("Someone".to_string()),
-            user_id: "EVERYONE!".to_string(),
-            display_name: "EVERYONE!".to_string(),
-            avatar: "123".to_string(),
-            metadata: None,
-            is_owner: Some(true),
-            is_bot: false,
-            settings: None,
-        },LeagueUser {
-            username: Some("Someone".to_string()),
-            user_id: "McJesus!".to_string(),
-            display_name: "McJesus!".to_string(),
-            avatar: "123".to_string(),
-            metadata: None,
-            is_owner: Some(true),
-            is_bot: false,
-            settings: None,
-        },
-
-        
-        
+                username: Some("Someone".to_string()),
+                user_id: "ME!".to_string(),
+                display_name: "Pete'sFarts".to_string(),
+                avatar: "123".to_string(),
+                metadata: None,
+                is_owner: Some(true),
+                is_bot: false,
+                settings: None,
+            },
+            LeagueUser {
+                username: Some("Someone".to_string()),
+                user_id: "YOU!".to_string(),
+                display_name: "YOU!".to_string(),
+                avatar: "123".to_string(),
+                metadata: None,
+                is_owner: Some(true),
+                is_bot: false,
+                settings: None,
+            },
+            LeagueUser {
+                username: Some("Someone".to_string()),
+                user_id: "EVERYONE!".to_string(),
+                display_name: "EVERYONE!".to_string(),
+                avatar: "123".to_string(),
+                metadata: None,
+                is_owner: Some(true),
+                is_bot: false,
+                settings: None,
+            },
+            LeagueUser {
+                username: Some("Someone".to_string()),
+                user_id: "McJesus!".to_string(),
+                display_name: "McJesus!".to_string(),
+                avatar: "123".to_string(),
+                metadata: None,
+                is_owner: Some(true),
+                is_bot: false,
+                settings: None,
+            },
         ];
         let expecteds = vec![
             SeasonPerformance {

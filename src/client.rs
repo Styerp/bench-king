@@ -77,7 +77,7 @@ impl SleeperClient {
         SleeperClient { client }
     }
 
-    pub async fn get_user(&self, user_id: String) -> Result<User, String> {
+    pub async fn get_user(&self, user_id: &String) -> Result<User, String> {
         let url = format!("{BASE_URL}user/{}", user_id);
         match self.get_url(url).await {
             Ok(user) => Ok(user),
@@ -85,7 +85,7 @@ impl SleeperClient {
         }
     }
 
-    pub fn get_avatar_url(&self, avatar_id: String, full_or_thumb: AvatarType) -> String {
+    pub fn get_avatar_url(&self, avatar_id: &String, full_or_thumb: AvatarType) -> String {
         let full_or_thumb = match full_or_thumb {
             AvatarType::Full => "",
             AvatarType::Thumb => "thumb",
@@ -95,8 +95,8 @@ impl SleeperClient {
 
     pub async fn get_all_leagues_for_user(
         &self,
-        user_id: String,
-        season: String,
+        user_id: &String,
+        season: &String,
         sport: Option<Sport>,
     ) -> Result<Vec<League>, String> {
         let url = format!(
@@ -111,7 +111,7 @@ impl SleeperClient {
         }
     }
 
-    pub async fn get_league_details(&self, league_id: String) -> Result<League, String> {
+    pub async fn get_league_details(&self, league_id: &String) -> Result<League, String> {
         let url = format!("{BASE_URL}league/{}", league_id);
         match self.get_url(url).await {
             Ok(league) => Ok(league),
@@ -119,7 +119,7 @@ impl SleeperClient {
         }
     }
 
-    pub async fn get_rosters_in_league(&self, league_id: String) -> Result<Vec<Roster>, String> {
+    pub async fn get_rosters_in_league(&self, league_id: &String) -> Result<Vec<Roster>, String> {
         let url = format!("{BASE_URL}league/{}/rosters", league_id);
         match self.get_url(url).await {
             Ok(rosters) => Ok(rosters),
@@ -127,7 +127,7 @@ impl SleeperClient {
         }
     }
 
-    pub async fn get_users_in_league(&self, league_id: String) -> Result<Vec<LeagueUser>, String> {
+    pub async fn get_users_in_league(&self, league_id: &String) -> Result<Vec<LeagueUser>, String> {
         let url = format!("{BASE_URL}league/{}/users", league_id);
         match self.get_url(url).await {
             Ok(users) => Ok(users),
@@ -137,7 +137,7 @@ impl SleeperClient {
 
     pub async fn get_league_matchups_for_week(
         &self,
-        league_id: String,
+        league_id: &String,
         week: i32,
     ) -> Result<Vec<Matchup>, String> {
         let url = format!("{BASE_URL}league/{}/matchups/{}", league_id, week);
@@ -150,7 +150,7 @@ impl SleeperClient {
     // WIP: Need to figure out how deserialize t1_from/t2_from
     pub async fn get_playoff_bracket_for_league(
         &self,
-        league_id: String,
+        league_id: &String,
         winner_or_loser: WinnerOrLoser,
     ) -> Result<Vec<Playoff>, String> {
         //return Err(NotImplementedError.to_string());
