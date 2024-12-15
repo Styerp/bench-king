@@ -55,7 +55,7 @@ impl std::ops::AddAssign for SeasonPerformance {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 struct Standing {
     team_name: String,
     rank_league: usize,
@@ -416,6 +416,89 @@ mod tests {
             assert_eq!(actual.points_against, expected.points_against);
             assert_eq!(actual.points_for, expected.points_for);
             assert_eq!(actual.team_name, expected.team_name);
+        }
+    }
+
+    #[test]
+    fn test_calc_ranks() {
+        let inputs = vec![
+            // Top
+            SeasonPerformance {
+                team_name: "Patrick".to_string(),
+                head_to_head_losses: 2,
+                head_to_head_wins: 12,
+                league_wins: 8,
+                league_losses: 6,
+                points_for: 10.0,
+                points_against: 10.0
+            },
+            // Bottom
+            SeasonPerformance {
+                team_name: "Hayden".to_string(),
+                head_to_head_losses: 8,
+                head_to_head_wins: 6,
+                league_wins: 10,
+                league_losses: 4,
+                points_for: 10.0,
+                points_against: 10.0
+            },
+            // Tiebreakers
+            SeasonPerformance {
+                team_name: "Beev".to_string(),
+                head_to_head_losses: 7,
+                head_to_head_wins: 7,
+                league_wins: 10,
+                league_losses: 4,
+                points_for: 15.0,
+                points_against: 10.0
+            },
+            SeasonPerformance {
+                team_name: "Nabeel".to_string(),
+                head_to_head_losses: 7,
+                head_to_head_wins: 7,
+                league_wins: 10,
+                league_losses: 4,
+                points_for: 14.0,
+                points_against: 10.0
+            }
+        ];
+        let output = vec![
+            Standing {
+                team_name: "Patrick".to_string(),
+                rank_head_to_head: 0, // 0 indexed
+                rank_league: 3,
+                rank_combined: 0,
+                season_performance: inputs.get(0).unwrap().clone()
+            },
+            Standing {
+                team_name: "Hayden".to_string(),
+                rank_head_to_head: 3, // last, 0 index == 4th
+                rank_league: 2,
+                rank_combined: 3,
+                season_performance: inputs.get(1).unwrap().clone()
+            },
+            Standing {
+                team_name: "Beev".to_string(),
+                rank_head_to_head: 1,
+                rank_league: 0,
+                rank_combined: 1,
+                season_performance: inputs.get(2).unwrap().clone()
+            },
+            Standing {
+                team_name: "Nabeel".to_string(),
+                rank_head_to_head: 2,
+                rank_league: 1, // Tied with Beev, loses on points
+                rank_combined: 2,
+                season_performance: inputs.get(3).unwrap().clone()
+            }
+        ];
+        let actual = calc_ranks(inputs);
+        for i in output {
+            for j in &actual {
+                if i.team_name == j.team_name{
+                    assert_eq!(&i, j);
+                }
+            }
         }
     }
 }

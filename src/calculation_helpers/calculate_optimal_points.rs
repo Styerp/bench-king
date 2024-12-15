@@ -71,9 +71,11 @@ pub fn optimal_score_for_matchup(
         let mut players_for_position = viable_players_with_stats
             .iter()
             .filter(|&player| match &player.fantasy_positions {
-                Some(fp) => fp
-                    .iter()
-                    .any(|p| position.value().iter().any(|v| p.value().contains(v) && matchup.players.contains(&player.player_id))),
+                Some(fp) => fp.iter().any(|p| {
+                    position.value().iter().any(|v| {
+                        p.value().contains(v) && matchup.players.contains(&player.player_id)
+                    })
+                }),
                 None => false,
             })
             .map(|p| p.to_owned().to_owned())
@@ -85,12 +87,15 @@ pub fn optimal_score_for_matchup(
 
         for _l in 0..count {
             if players_for_position.len() == 0 {
-                continue
+                continue;
             }
             let (player, up, pfp) = get_player(&mut used_players, players_for_position);
             used_players = up.clone();
             players_for_position = pfp;
-            let points = matchup.players_points.get(&player.player_id).unwrap_or(&0.0f32);
+            let points = matchup
+                .players_points
+                .get(&player.player_id)
+                .unwrap_or(&0.0f32);
             optimal_roster.optimal_points += points;
             used_players.insert(player.player_id.to_string());
         }
@@ -108,20 +113,112 @@ fn get_player(
             let is_used = used_players.contains(&p.player_id);
             used_players.insert(p.player_id.clone());
             if is_used {
-                return get_player(used_players, players)
+                return get_player(used_players, players);
+            }
+            (p.clone().clone(), used_players, players)
         }
-            (
-            p.clone().clone(),
-            used_players,
-            players,
-        )
-    }
-        None => get_player(used_players, players)
+        None => get_player(used_players, players),
     }
 }
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     #[test]
-    fn test_calculate_optimal_points() {}
+    fn test_get_player() {
+        let mut players = vec![PlayerDetails::default(
+            true,
+            "1".to_string(),
+            "nfl".to_string(),
+        ),
+        PlayerDetails::default(
+            true,
+            "2".to_string(),
+            "nfl".to_string(),
+        ),PlayerDetails::default(
+            true,
+            "3".to_string(),
+            "nfl".to_string(),
+        ),PlayerDetails::default(
+            true,
+            "4".to_string(),
+            "nfl".to_string(),
+        ),
+        PlayerDetails::default(
+            true,
+            "4".to_string(),
+            "nfl".to_string(),
+        ),
+        ];
+        let mut used_players: HashSet<String> = HashSet::new();
+
+        let mut expected_used_players = HashSet::new();
+        expected_used_players.insert("4".to_string());
+        let actual = get_player(&mut used_players, players);
+        let expected = (PlayerDetails::default(
+            true,
+            "4".to_string(),
+            "nfl".to_string(),
+        ),&expected_used_players ,
+        vec![PlayerDetails::default(
+            true,
+            "1".to_string(),
+            "nfl".to_string(),
+        ),
+        PlayerDetails::default(
+            true,
+            "2".to_string(),
+            "nfl".to_string(),
+        ),PlayerDetails::default(
+            true,
+            "3".to_string(),
+            "nfl".to_string(),
+        ),PlayerDetails::default(
+            true,
+            "4".to_string(),
+            "nfl".to_string(),
+        ),]);
+        assert_eq!(actual, expected);
+        players = vec![PlayerDetails::default(
+            true,
+            "1".to_string(),
+            "nfl".to_string(),
+        ),
+        PlayerDetails::default(
+            true,
+            "2".to_string(),
+            "nfl".to_string(),
+        ),PlayerDetails::default(
+            true,
+            "3".to_string(),
+            "nfl".to_string(),
+        ),PlayerDetails::default(
+            true,
+            "4".to_string(),
+            "nfl".to_string(),
+        ),];
+        let second_actual = get_player(&mut used_players, players);
+        expected_used_players.insert("3".to_string());
+        let second_expected = (
+            PlayerDetails::default(
+                true,
+                "3".to_string(),
+                "nfl".to_string(),
+            ),
+            &expected_used_players,
+            vec![PlayerDetails::default(
+                true,
+                "1".to_string(),
+                "nfl".to_string(),
+            ),
+            PlayerDetails::default(
+                true,
+                "2".to_string(),
+                "nfl".to_string(),
+            )]
+        );
+        assert_eq!(second_actual,second_expected);
+
+    }
 }

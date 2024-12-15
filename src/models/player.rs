@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use super::positions::RosterPosition;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct PlayerDetails {
     pub active: bool,
     pub age: Option<u8>,
@@ -57,8 +57,63 @@ pub struct PlayerDetails {
     pub yahoo_id: Option<u32>,
     pub years_exp: Option<u8>,
 }
+impl PlayerDetails {
+    pub fn default(active: bool, player_id: String, sport: String) -> Self {
+        PlayerDetails {
+            active: active,
+            player_id: player_id,
+            sport: sport,
+            age: None,
+            birth_city: None,
+            birth_country: None,
+            birth_date: None,
+            birth_state: None,
+            college: None,
+            competitions: None,
+            depth_chart_order: None,
+            depth_chart_position: None,
+            espn_id: None,
+            fantasy_data_id: None,
+            fantasy_positions: None,
+            first_name: None,
+            full_name: None,
+            gsis_id: None,
+            hashtag: None,
+            height: None,
+            high_school: None,
+            injury_body_part: None,
+            injury_notes: None,
+            injury_start_date: None,
+            injury_status: None,
+            last_name: None,
+            metadata: None,
+            news_updated: None,
+            number: None,
+            oddsjam_id: None,
+            opta_id: None,
+            pandascore_id: None,
+            position: None,
+            practice_participation: None,
+            rotowire_id: None,
+            rotoworld_id: None,
+            search_first_name: None,
+            search_full_name: None,
+            search_last_name: None,
+            search_rank: None,
+            sportradar_id: None,
+            stats_id: None,
+            status: None,
+            swish_id: None,
+            team: None,
+            team_abbr: None,
+            weight: None,
+            yahoo_id: None,
+            years_exp: None,
+        }
+    }
+}
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct PlayerMetadata {
     pub channel_id: Option<String>,
     pub injury_override_off_2021_0: Option<String>,
