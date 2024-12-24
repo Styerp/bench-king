@@ -1,19 +1,21 @@
 #[derive(Debug, Default, Clone)]
-pub struct Report {
+pub struct BenchKingReport {
     pub owner_name: String,
     pub optimal_points: f32,
     pub actual_points: f32,
 }
-impl Report {
+impl BenchKingReport {
     pub fn difference(&self) -> f32 {
         self.optimal_points - self.actual_points
     }
 }
-impl std::fmt::Display for Report {
+impl std::fmt::Display for BenchKingReport {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Owner {} scored {} points, optimal score is {}, difference is {}",
+            r#"
+        Team: {}
+        Acutal: {}, Optimal: {}, Delta: {}"#,
             self.owner_name,
             round_to_two_decimals(self.actual_points),
             round_to_two_decimals(self.optimal_points),

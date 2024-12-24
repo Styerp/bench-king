@@ -1,4 +1,4 @@
-use super::{calculate_optimal_points::optimal_score_for_matchup, report::Report};
+use super::{calculate_optimal_points::optimal_score_for_matchup, report::BenchKingReport};
 use crate::models::*;
 
 pub fn calculate_bench_king_for_week(
@@ -7,7 +7,7 @@ pub fn calculate_bench_king_for_week(
     players: &player::Players,
     league: &league::League,
     owners: &Vec<user::LeagueUser>,
-) -> Vec<Report> {
+) -> Vec<BenchKingReport> {
     let mut optimals = vec![];
     for matchup in matchups {
         let roster = rosters
@@ -22,7 +22,7 @@ pub fn calculate_bench_king_for_week(
             league.roster_positions.clone(),
         );
 
-        let rep = Report {
+        let rep = BenchKingReport {
             owner_name: owners
                 .iter()
                 .find(|o| o.user_id == optimal_roster.owner_id)

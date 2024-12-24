@@ -69,7 +69,6 @@ impl std::fmt::Display for Standing {
         write!(
             f,
             r#"Team {} ranked {} by head to head wins, {} by league wins, and {} combined.
-    Rank delta: {}
     Records:
         {}-{} Head to Head
         {}-{} League
@@ -81,7 +80,6 @@ impl std::fmt::Display for Standing {
             self.rank_head_to_head + 1,
             self.rank_league + 1,
             self.rank_combined + 1,
-            (self.rank_combined as i8 - self.rank_head_to_head as i8).abs(),
             self.season_performance.head_to_head_wins,
             self.season_performance.head_to_head_losses,
             self.season_performance.league_wins,
@@ -195,7 +193,7 @@ async fn calculate_season_performances(league_id: String) -> Vec<SeasonPerforman
         }
     }
     let mut final_data: Vec<SeasonPerformance> = vec![];
-    for (_user, details) in data {
+    for (_, details) in data {
         final_data.push(details)
     }
     final_data

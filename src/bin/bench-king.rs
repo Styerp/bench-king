@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use bench_king_sleeper::calculation_helpers::calculate_bench_king_for_week::calculate_bench_king_for_week;
-use bench_king_sleeper::calculation_helpers::report::Report;
+use bench_king_sleeper::calculation_helpers::report::BenchKingReport;
 use bench_king_sleeper::client::SleeperClient;
 use clap::Parser;
 
@@ -58,7 +58,7 @@ pub async fn main() {
         .unwrap();
     let mut optimals;
     if args.season_to_date {
-        let mut week_map: HashMap<String, Vec<Report>> = HashMap::new();
+        let mut week_map: HashMap<String, Vec<BenchKingReport>> = HashMap::new();
         for week in 1..args.week {
             let matchups = sleeper_client
                 .get_league_matchups_for_week(&league_id, week)
@@ -82,7 +82,7 @@ pub async fn main() {
                     total_optimal_points += report.optimal_points;
                     total_actual_points += report.actual_points;
                 }
-                Report {
+                BenchKingReport {
                     owner_name: owner.clone(),
                     optimal_points: total_optimal_points,
                     actual_points: total_actual_points,
@@ -96,9 +96,9 @@ pub async fn main() {
             .unwrap();
         optimals = calculate_bench_king_for_week(matchups, &rosters, &players, &league, &owners);
     }
-    optimals.sort_by_key(|a| -1 * a.difference() as i32);
+    optimals.sort_by_key(|a| (-a.difference() * 1000.0) as i32);
+    println!("League {}", league.name);
     for (idx, optimal) in optimals.iter().enumerate() {
-        println!("Bench King Rank: {}: {}", idx + 1, optimal);
+        println!("Rank {:02}: {}", idx + 1, optimal);
     }
-    //println!("{:#?}", optimals);
 }
