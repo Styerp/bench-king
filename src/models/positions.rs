@@ -60,18 +60,17 @@ impl RosterPosition {
             RosterPosition::FS => vec!["FS".to_string()], // Free Safety
             RosterPosition::G => vec!["G".to_string()],   // Guard
             RosterPosition::IdpFlex => vec![
-                "C".to_string(),
+                "CB".to_string(),
                 "DB".to_string(),
                 "DE".to_string(),
                 "DL".to_string(),
                 "DT".to_string(),
+                "FS".to_string(),
                 "IDP".to_string(),
+                "ILB".to_string(),
                 "LB".to_string(),
                 "LEO".to_string(),
-                "OG".to_string(),
-                "OL".to_string(),
                 "OLB".to_string(),
-                "OT".to_string(),
                 "S".to_string(),
                 "SS".to_string(),
             ], // IDP Flex
